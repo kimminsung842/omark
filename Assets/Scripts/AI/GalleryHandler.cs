@@ -1,16 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using UnityEngine.Networking;
-using System.IO;
-
 
 public class GalleryHandler : MonoBehaviour
 {
     [Header("UI References")]
     public RawImage displayImage;
     public Text feedbackText;
-    public Text imgPath;
 
     private Texture2D loadedTexture;
 
@@ -36,9 +32,9 @@ public class GalleryHandler : MonoBehaviour
             loadedTexture = texture;
             displayImage.texture = loadedTexture;
             displayImage.color = Color.white;
-            imgPath.text = path;
 
             ShowFeedback("이미지가 성공적으로 로드되었습니다!", new Color(0.2f, 0.8f, 0.2f));
+            
         },
         "이미지를 선택하세요",
         "image/*");
