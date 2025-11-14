@@ -7,6 +7,7 @@ public class GalleryHandler : MonoBehaviour
     [Header("UI References")]
     public RawImage displayImage;
     public Text feedbackText;
+    public Text imagepath;
 
     private Texture2D loadedTexture;
 
@@ -34,7 +35,7 @@ public class GalleryHandler : MonoBehaviour
             displayImage.color = Color.white;
 
             ShowFeedback("이미지가 성공적으로 로드되었습니다!", new Color(0.2f, 0.8f, 0.2f));
-            
+            imagepath.text = path;
         },
         "이미지를 선택하세요",
         "image/*");
