@@ -17,6 +17,9 @@ public class ImageHandler : MonoBehaviour
     private Texture2D loadedTexture;
     
 
+    // -------------------------------
+    // 0. 갤러리에서 사진 선택
+    // -------------------------------
     public void PickImage()
     {
         if(imagePath.text == null)
@@ -31,6 +34,10 @@ public class ImageHandler : MonoBehaviour
         StartCoroutine(UploadImageToServer());
     }
 
+
+    // -------------------------------
+    // 1. Texture2D → 서버 전송
+    // -------------------------------
     private IEnumerator UploadImageToServer()
     {
         if (loadedTexture == null)
@@ -72,6 +79,81 @@ public class ImageHandler : MonoBehaviour
         }
     }
 
+    // -------------------------------
+    // 2. JSON에서 obj_url 추출
+    // -------------------------------
+    string ExtractOBJUrl(string json)
+    {
+        // 매우 단순한 파싱 (JsonUtility로는 딕셔너리가 안돼서 수동 파싱)
+        string key = "\"obj_url\":";
+        int idx = json.IndexOf(key);
+        if (idx < 0) return null;
+
+        int start = json.IndexOf("\"", idx + key.Length) + 1;
+        int end = json.IndexOf("\"", start);
+
+        return json.Substring(start, end - start);
+    }
+
+    // -------------------------------
+    // 3. OBJ 파일 다운로드
+    // -------------------------------
+    IEnumerator DownloadOBJ(string url)
+    {
+        Debug.Log("OBJ 다운로드 시작: " + url);
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("OBJ 다운로드 실패: " + www.error);
+                Debug.LogError("응답: " + www.downloadHandler.text);
+                yield break;
+            }
+
+            byte[] objBytes = www.downloadHandler.data;
+
+            string savePath = Application.persistentDataPath + "/mesh.obj";
+            File.WriteAllBytes(savePath, objBytes);
+
+            Debug.Log("OBJ 저장 완료: " + savePath);
+
+            // OBJ 파싱 후 Unity Mesh로 변환
+            LoadOBJToScene(savePath);
+        }
+    }
+        // -------------------------------
+    // 4. OBJ 파일을 Unity Mesh로 로드
+    // -------------------------------
+    void LoadOBJToScene(string path)
+    {
+        Debug.Log("OBJ 로드 시작: " + path);
+
+        // Unity는 OBJ 파일을 기본적으로 파싱할 수 없으므로
+        // SimpleOBJImporter 같은 파서 필요
+        // 기본적인 OBJ 로더 구현
+
+        Mesh mesh = SimpleOBJImporter.Import(path);
+        if (mesh == null)
+        {
+            Debug.LogError("OBJ 파싱 실패");
+            return;
+        }
+
+        GameObject obj = new GameObject("GeneratedMesh");
+        MeshFilter mf = obj.AddComponent<MeshFilter>();
+        MeshRenderer mr = obj.AddComponent<MeshRenderer>();
+
+        mf.mesh = mesh;
+        mr.material = meshMaterial;
+
+        obj.transform.position = Vector3.zero;
+        obj.transform.localScale = Vector3.one * 0.1f;
+
+        Debug.Log("OBJ 로드 완료!");
+    }
     private void ShowFeedback(string message, Color color)
     {
         if (feedbackText != null)
