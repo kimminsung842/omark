@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UI; // GridLayoutGroup 사용을 위해 추가
 using System.Collections.Generic;
 
 public class MarkerListUIController : MonoBehaviour
@@ -12,8 +12,18 @@ public class MarkerListUIController : MonoBehaviour
     [Header("뷰 제어")]
     public GameObject markerListPanel;
 
-    private GameObject currentPlusButton;
+    [Header("패딩 조정 설정")]
+    // Unity Inspector에서 Marker_Content에 붙어있는 GridLayoutGroup을 연결해야 합니다.
+    public GridLayoutGroup markerContentGrid;
 
+    public int threshold4Markers = 4; // 첫 번째 경계 (4개 미만)
+    public int threshold8Markers = 8; // 두 번째 경계 (8개 미만)
+
+    public int paddingLessThan4 = -300;      // 마커 수 < 4 일 때 적용
+    public int padding4To7 = -150;           // 4 <= 마커 수 < 8 일 때 적용
+    public int paddingGreaterEqual8 = 0;     // 마커 수 >= 8 일 때 적용
+
+    private GameObject currentPlusButton;
     private List<GameObject> createdMarkerIcons = new List<GameObject>();
 
     void Start()
@@ -27,31 +37,14 @@ public class MarkerListUIController : MonoBehaviour
         {
             Debug.LogError("Hierarchy에서 이름이 'Plus'인 객체를 찾을 수 없습니다. 수동 배치된 Plus 버튼을 확인하고 이름을 'Plus'로 지정하세요.");
         }
+
+        // 초기 시작 시 기본 패딩 값 적용
+        AdjustGridPadding();
     }
 
-    public void UpdateMarkerIconStatus(MarkerData updatedData)
-    {
-        // 리스트를 순회하며 해당 ID를 가진 UI 오브젝트를 찾습니다.
-        foreach (GameObject markerIcon in createdMarkerIcons)
-        {
-            // UI 오브젝트에 붙어있는 UIMarkerItemData 스크립트에서 ID를 가져옵니다.
-            UIMarkerItemData uiItemData = markerIcon.GetComponent<UIMarkerItemData>();
-
-            if (uiItemData != null && uiItemData.Data.Id == updatedData.Id)
-            {
-                // 1. 저장된 데이터 업데이트 (선택 사항이지만 안전을 위해)
-                // uiItemData.Data는 참조이므로 이미 업데이트되었을 수 있습니다.
-                // 하지만 시각적 갱신을 위해 Setup을 다시 호출합니다.
-
-                // 2. UI 시각적 갱신: 즐겨찾기 별 이미지 등을 다시 설정합니다.
-                uiItemData.Setup(updatedData);
-
-                Debug.Log($"[UI List] 마커 ID {updatedData.Id}의 UI 상태가 갱신되었습니다.");
-                return;
-            }
-        }
-    }
-
+    // ======================================================================
+    // 마커 생성 시 호출되는 함수
+    // ======================================================================
     public void UpdateInventoryDisplay(MarkerData newMarkerData)
     {
         if (currentPlusButton == null)
@@ -69,10 +62,11 @@ public class MarkerListUIController : MonoBehaviour
 
         newMarkerIcon.transform.SetSiblingIndex(currentPlusButton.transform.GetSiblingIndex());
 
+        // UIMarkerItemData 설정 로직 (이전 논의에서 구현됨)
         UIMarkerItemData uiItemData = newMarkerIcon.GetComponent<UIMarkerItemData>();
         if (uiItemData != null)
         {
-            uiItemData.Setup(newMarkerData); // 데이터를 UI 컴포넌트에 영구적으로 저장
+            uiItemData.Setup(newMarkerData);
         }
         else
         {
@@ -84,16 +78,13 @@ public class MarkerListUIController : MonoBehaviour
 
         currentPlusButton.transform.SetAsLastSibling();
 
+        // 마커가 추가되었으므로 패딩 조정
+        AdjustGridPadding();
     }
 
-    public void SetPanelVisibility(bool isVisible)
-    {
-        if (markerListPanel != null)
-        {
-            markerListPanel.SetActive(isVisible);
-        }
-    }
-
+    // ======================================================================
+    // 마커 삭제 시 호출되는 함수 (UIPopupManager에서 호출)
+    // ======================================================================
     public void RemoveMarkerIcon(string markerId)
     {
         GameObject markerToRemove = null;
@@ -116,14 +107,81 @@ public class MarkerListUIController : MonoBehaviour
             // 2. 리스트에서 제거
             createdMarkerIcons.Remove(markerToRemove);
 
-            // 3. 씬에서 오브젝트 파괴 (UI에서 사라지게 함)
+            // 3. 씬에서 오브젝트 파괴
             Destroy(markerToRemove);
+
+            // 마커가 제거되었으므로 패딩 조정
+            AdjustGridPadding();
 
             Debug.Log($"[UI List] 마커 ID {markerId}의 UI 항목이 리스트에서 제거되었습니다.");
         }
-        else
+    }
+
+    // ======================================================================
+    // 마커 개수에 따라 Grid Layout Group의 패딩을 조정하는 핵심 함수
+    // ======================================================================
+    private void AdjustGridPadding()
+    {
+        if (markerContentGrid == null) return;
+
+        // 현재 마커의 총 개수 (Plus 버튼 제외)
+        int markerCount = createdMarkerIcons.Count;
+
+        // Grid Layout Group의 Padding 구조체 복사
+        GridLayoutGroup grid = markerContentGrid;
+        RectOffset padding = grid.padding;
+        int newPaddingTop;
+
+        if (markerCount < threshold4Markers) // 마커 수 < 4
         {
-            Debug.LogWarning($"[UI List] 마커 ID {markerId}를 리스트에서 찾을 수 없습니다.");
+            newPaddingTop = paddingLessThan4; // -300
+        }
+        else if (markerCount < threshold8Markers) // 4 <= 마커 수 < 8
+        {
+            newPaddingTop = padding4To7; // -150
+        }
+        else // 마커 수 >= 8
+        {
+            newPaddingTop = paddingGreaterEqual8; // 0
+        }
+
+        if (padding.top != newPaddingTop)
+        {
+            padding.top = newPaddingTop;
+
+            // 수정된 Padding 구조체를 다시 컴포넌트에 적용
+            grid.padding = padding;
+            Debug.Log($"마커 수 {markerCount}개. Top Padding을 {newPaddingTop}으로 설정.");
+        }
+    }
+
+    // ======================================================================
+    // 마커 편집 시 UI 갱신을 위해 호출되는 함수 (UIPopupManager에서 사용)
+    // ======================================================================
+    public void UpdateMarkerIconStatus(MarkerData updatedData)
+    {
+        foreach (GameObject markerIcon in createdMarkerIcons)
+        {
+            UIMarkerItemData uiItemData = markerIcon.GetComponent<UIMarkerItemData>();
+
+            if (uiItemData != null && uiItemData.Data.Id == updatedData.Id)
+            {
+                // UIMarkerItemData의 Setup 함수를 호출하여 이름, 색상, 즐겨찾기 상태 갱신
+                uiItemData.Setup(updatedData);
+                markerIcon.name = updatedData.Name; // GameObject 이름도 갱신
+
+                Debug.Log($"[UI List] 마커 ID {updatedData.Id}의 UI 상태가 갱신되었습니다.");
+                return;
+            }
+        }
+    }
+
+    // 마커 리스트 패널의 활성화/비활성화를 제어하는 함수 (슬라이더 로직에서 사용)
+    public void SetPanelVisibility(bool isVisible)
+    {
+        if (markerListPanel != null)
+        {
+            markerListPanel.SetActive(isVisible);
         }
     }
 }
