@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2148758354137516295}
   - component: {fileID: 1884394431709628043}
+  - component: {fileID: 23658125938636868}
   m_Layer: 0
   m_Name: Api
   m_TagString: Untagged
@@ -44,4 +45,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0229167b3412c84428f0aad22b625bff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ApiClient
+  baseUrl: https://kemini-aws.duckdns.org
+--- !u!114 &23658125938636868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7600577137919895528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21af472d83d0daf4f81f3ac4ef9d3c64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AccountRecoveryApi
   baseUrl: https://kemini-aws.duckdns.org

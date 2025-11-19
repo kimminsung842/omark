@@ -1,3 +1,4 @@
+Ôªøusing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,60 +7,60 @@ using TMPro;
 public class MainListUI : MonoBehaviour
 {
     [Header("Create Popup")]
-    public GameObject popupCreateRoom;     // Popup_CreateRoom
-    public TMP_InputField inputRoomName;   // Popup_CreateRoom/Box/Row_Input/Input
-    public Button btnCancel;               // Popup_CreateRoom/Box/Row_Buttons/Btn_Cancel
-    public Button btnOK;                   // Popup_CreateRoom/Box/Row_Buttons/Btn_OK
+    public GameObject popupCreateRoom;
+    public TMP_InputField inputRoomName;
+    public Button btnCancel;
+    public Button btnOK;
 
-    [Header("List Targets (Normal)")]
-    public Transform listContent;          // Panel_ListNormal/Scroll_List/Viewport/Content
-    public GameObject roomItemPrefab;      // Prefabs/RoomItem
+    [Header("List (Content)")]
+    public Transform listContent;
+    public GameObject roomItemPrefab;
 
-    [Header("Open Button")]
-    public Button btnOpenCreatePopup;      // Panel_ListNormal/Row_Actions/Btn_Create
+    [Header("Panels")]
+    public GameObject panelListNormal;
+    public GameObject panelListEdit;
 
-    [Header("Edit Mode UI")]
-    public GameObject panelListNormal;     // Panel_ListNormal
-    public GameObject panelListEdit;       // Panel_ListEdit
-    public Transform listContentEdit;      // Panel_ListEdit/Scroll_List/Viewport/Content
-    public Button btnOpenEdit;             // Panel_ListNormal/Row_Actions/Btn_EditList
-    public Button btnCloseEdit;            // Panel_ListEdit/Row_Actions/Btn_Back
-    public Button btnDeleteChecked;        // Panel_ListEdit/Row_Actions/Btn_Delete
+    [Header("Buttons")]
+    public Button btnOpenCreatePopup;
+    public Button btnOpenEdit;
+    public Button btnCloseEdit;
+    public Button btnDeleteChecked;
 
     [Header("Empty Text")]
-    public GameObject txtEmpty;            // "∏ÆΩ∫∆Æ∞° ∫ÒæÓ¿÷Ω¿¥œ¥Ÿ" æ»≥ª ≈ÿΩ∫∆Æ
+    public GameObject txtEmpty;
 
     [Header("Delete Confirm Popup")]
-    public GameObject popupConfirm;        // Popup_Confirm
-    public Button popupConfirmOk;          // Popup_Confirm/Box/Btn_OK
-    public Button popupConfirmCancel;      // Popup_Confirm/Box/Btn_Cancel
-    public TMP_Text popupConfirmTitle;     // Popup_Confirm/Box/Txt_Title
+    public GameObject popupConfirm;
+    public Button popupConfirmOk;
+    public Button popupConfirmCancel;
+    public TMP_Text popupConfirmTitle;
 
-    enum DeleteMode
-    {
-        None,
-        Single,
-        Multiple
-    }
-
+    enum DeleteMode { None, Single, Multiple }
     DeleteMode pendingDeleteMode = DeleteMode.None;
-    readonly List<GameObject> pendingDeleteEditItems = new List<GameObject>();
-    readonly Dictionary<GameObject, GameObject> editToNormal = new Dictionary<GameObject, GameObject>();
+
+    readonly List<RoomItem> pendingDeleteItems = new List<RoomItem>();
+
 
     void Awake()
     {
+        // Ï¥àÍ∏∞ ÌåùÏóÖ ÎπÑÌôúÏÑ±Ìôî
         if (popupCreateRoom) popupCreateRoom.SetActive(false);
         if (popupConfirm) popupConfirm.SetActive(false);
 
+        // ÏÉà Í≥µÍ∞Ñ ÏÉùÏÑ± UI
         if (btnOpenCreatePopup) btnOpenCreatePopup.onClick.AddListener(OpenCreatePopup);
         if (btnCancel) btnCancel.onClick.AddListener(CloseCreatePopup);
         if (btnOK) btnOK.onClick.AddListener(CreateRoom);
 
+        // Ìé∏Ïßë Î™®Îìú
         if (btnOpenEdit) btnOpenEdit.onClick.AddListener(OpenEditMode);
         if (btnCloseEdit) btnCloseEdit.onClick.AddListener(CloseEditMode);
+
+        // ÏùºÍ¥Ñ ÏÇ≠Ï†ú Î≤ÑÌäº
         if (btnDeleteChecked) btnDeleteChecked.onClick.AddListener(OnClickDeleteChecked);
 
-        if (popupConfirmOk) popupConfirmOk.onClick.AddListener(OnClickConfirmDelete);
+        // ÏÇ≠Ï†ú ÌôïÏù∏ ÌåùÏóÖ
+        if (popupConfirmOk) popupConfirmOk.onClick.AddListener(OnConfirmDelete);
         if (popupConfirmCancel) popupConfirmCancel.onClick.AddListener(CloseConfirmPopup);
     }
 
@@ -68,290 +69,176 @@ public class MainListUI : MonoBehaviour
         RefreshEmptyText();
     }
 
-    // ------------------- ªı ∞¯∞£ ª˝º∫ -------------------
-
+    // ------------------------------------------------------------
+    // 1) ÏÉà Í≥µÍ∞Ñ ÏÉùÏÑ±
+    // ------------------------------------------------------------
     void OpenCreatePopup()
     {
-        if (!popupCreateRoom) return;
         popupCreateRoom.SetActive(true);
-
-        if (inputRoomName)
-        {
-            inputRoomName.text = "";
-            inputRoomName.ActivateInputField();
-        }
+        inputRoomName.text = "";
+        inputRoomName.ActivateInputField();
     }
 
     void CloseCreatePopup()
     {
-        if (!popupCreateRoom) return;
         popupCreateRoom.SetActive(false);
     }
 
     void CreateRoom()
     {
-        if (!roomItemPrefab || !listContent) return;
-
-        string nameToUse = "ªı ∞¯∞£";
-        if (inputRoomName && !string.IsNullOrWhiteSpace(inputRoomName.text))
+        string nameToUse = "ÏÉà Í≥µÍ∞Ñ";
+        if (!string.IsNullOrWhiteSpace(inputRoomName.text))
             nameToUse = inputRoomName.text.Trim();
 
         GameObject go = Instantiate(roomItemPrefab, listContent);
-        go.name = $"RoomItem_{nameToUse}";
+        go.name = "RoomItem_" + nameToUse;
 
-        SetRoomItemMode(go, false);
-        ApplyRoomItemTexts(go, nameToUse, GetNowDateString());
+        var item = go.GetComponent<RoomItem>();
+        if (item != null)
+        {
+            item.SetTexts(nameToUse, GetNowDateString());
+            item.SetEditMode(false);
+
+            // Îã®Ïùº ÏÇ≠Ï†ú Î≤ÑÌäº ÏΩúÎ∞± Ïó∞Í≤∞
+            item.SetDeleteAction(() =>
+            {
+                pendingDeleteItems.Clear();
+                pendingDeleteItems.Add(item);
+                OpenConfirmPopup(DeleteMode.Single);
+            });
+        }
 
         CloseCreatePopup();
         RefreshEmptyText();
-
-        // °⁄ √ﬂ∞°/ª˝º∫ »ƒ ∑π¿Ãæ∆øÙ ∞≠¡¶ ¿Á∞ËªÍ
-        RebuildListsNow();
+        StartCoroutine(RebuildNextFrame());
     }
 
-    // ------------------- ∆Ì¡˝ ∏µÂ ¿¸»Ø -------------------
-
+    // ------------------------------------------------------------
+    // 2) Ìé∏Ïßë Î™®Îìú Ï†ÑÌôò
+    // ------------------------------------------------------------
     void OpenEditMode()
     {
-        SyncEditList();
+        panelListNormal.SetActive(false);
+        panelListEdit.SetActive(true);
 
-        if (panelListNormal) panelListNormal.SetActive(false);
-        if (panelListEdit) panelListEdit.SetActive(true);
+        foreach (Transform child in listContent)
+        {
+            var item = child.GetComponent<RoomItem>();
+            if (item != null)
+            {
+                item.SetEditMode(true);
+                item.SetToggle(false); // Ìé∏ÏßëÎ™®Îìú ÏßÑÏûÖ Ïãú ÏÑ†ÌÉù Ï¥àÍ∏∞Ìôî
+            }
+        }
 
-        // °⁄ «•Ω√ ¿¸»Ø µ⁄ø°µµ ¿Á∫ÙµÂ
-        RebuildListsNow();
+        StartCoroutine(RebuildNextFrame());
     }
 
     void CloseEditMode()
     {
-        if (panelListEdit) panelListEdit.SetActive(false);
-        if (panelListNormal) panelListNormal.SetActive(true);
-
-        FixAllNormalRoomItemMode();   // °⁄ Normal »≠∏Èø°º≠¥¬ «◊ªÛ Group_Normal∏∏ ∫∏¿Ãµµ∑œ
-        RefreshEmptyText();
-
-        // °⁄ ¿¸»Ø »ƒ ¿Á∫ÙµÂ
-        RebuildListsNow();
-    }
-
-    // Normal ∏ÆΩ∫∆Æ °Ê Edit ∏ÆΩ∫∆Æ ∫π¡¶
-    void SyncEditList()
-    {
-        if (!listContent || !listContentEdit) return;
-
-        editToNormal.Clear();
-
-        for (int i = listContentEdit.childCount - 1; i >= 0; i--)
+        // Ìé∏ÏßëÎ™®ÎìúÏóêÏÑú Î≥ÄÍ≤ΩÌïú Ïù¥Î¶ÑÏùÑ Î™®Îëê Ï†ÄÏû•
+        foreach (Transform child in listContent)
         {
-            Destroy(listContentEdit.GetChild(i).gameObject);
-        }
-
-        foreach (Transform normalItem in listContent)
-        {
-            GameObject clone = Instantiate(normalItem.gameObject, listContentEdit);
-            SetRoomItemMode(clone, true);
-
-            var toggle = clone.transform.Find("Group_Edit/Toggle_Select")?.GetComponent<Toggle>();
-            if (toggle != null) toggle.isOn = false;
-
-            editToNormal[clone] = normalItem.gameObject;
-
-            var btnSingleDelete = clone.transform.Find("Group_Edit/Btn_Delete")?.GetComponent<Button>();
-            if (btnSingleDelete != null)
+            var item = child.GetComponent<RoomItem>();
+            if (item != null)
             {
-                btnSingleDelete.onClick.RemoveAllListeners();
-                GameObject captured = clone;
-                btnSingleDelete.onClick.AddListener(() => OnClickDeleteSingle(captured));
+                item.ApplyEditedName();  // Ïù¥Î¶Ñ Ï†ÄÏû•
+                item.SetEditMode(false); // Í∏∞Î≥∏Î™®ÎìúÎ°ú Î≥µÍ∑Ä
             }
         }
 
-        // °⁄ ∫π¡¶ ¿€æ˜ »ƒ ∑π¿Ãæ∆øÙ ¿Á∫ÙµÂ
-        RebuildListsNow();
+        panelListEdit.SetActive(false);
+        panelListNormal.SetActive(true);
+
+        RefreshEmptyText();
+        StartCoroutine(RebuildNextFrame());
     }
 
-    // ------------------- ªË¡¶ ø‰√ª -------------------
 
+    // ------------------------------------------------------------
+    // 3) Îã§Ï§ëÏÇ≠Ï†ú Î≤ÑÌäº
+    // ------------------------------------------------------------
     void OnClickDeleteChecked()
     {
-        if (!listContentEdit) return;
+        pendingDeleteItems.Clear();
 
-        pendingDeleteEditItems.Clear();
-
-        foreach (Transform editItem in listContentEdit)
+        foreach (Transform child in listContent)
         {
-            var toggle = editItem.transform.Find("Group_Edit/Toggle_Select")?.GetComponent<Toggle>();
-            if (toggle != null && toggle.isOn)
-            {
-                pendingDeleteEditItems.Add(editItem.gameObject);
-            }
+            var item = child.GetComponent<RoomItem>();
+            if (item != null && item.IsSelected())
+                pendingDeleteItems.Add(item);
         }
 
-        if (pendingDeleteEditItems.Count == 0) return;
+        if (pendingDeleteItems.Count == 0)
+            return;
 
         OpenConfirmPopup(DeleteMode.Multiple);
     }
 
-    void OnClickDeleteSingle(GameObject editItem)
-    {
-        if (!editItem) return;
-
-        pendingDeleteEditItems.Clear();
-        pendingDeleteEditItems.Add(editItem);
-
-        OpenConfirmPopup(DeleteMode.Single);
-    }
-
+    // ------------------------------------------------------------
+    // 4) ÏÇ≠Ï†ú ÌåùÏóÖ
+    // ------------------------------------------------------------
     void OpenConfirmPopup(DeleteMode mode)
     {
         pendingDeleteMode = mode;
 
-        if (popupConfirmTitle)
-        {
-            popupConfirmTitle.text =
-                (mode == DeleteMode.Single)
-                    ? "¿Ã ∞¯∞£¿ª ªË¡¶«œΩ√∞⁄Ω¿¥œ±Ó?"
-                    : "º±≈√«— ∞¯∞£µÈ¿ª ªË¡¶«œΩ√∞⁄Ω¿¥œ±Ó?";
-        }
+        popupConfirmTitle.text =
+            (mode == DeleteMode.Single)
+            ? "Ï†ïÎßê ÏÇ≠Ï†úÌïòÏãúÍ≤†ÏäµÎãàÍπå?"
+            : "ÏÑ†ÌÉùÌïú Í≥µÍ∞ÑÎì§ÏùÑ ÏÇ≠Ï†úÌïòÏãúÍ≤†ÏäµÎãàÍπå?";
 
-        if (popupConfirm) popupConfirm.SetActive(true);
-    }
-
-    // ------------------- ªË¡¶ »Æ¡§ / √Îº“ -------------------
-
-    void OnClickConfirmDelete()
-    {
-        if (pendingDeleteMode == DeleteMode.None)
-        {
-            CloseConfirmPopup();
-            return;
-        }
-
-        foreach (GameObject editItem in pendingDeleteEditItems)
-        {
-            if (!editItem) continue;
-
-            if (editToNormal.TryGetValue(editItem, out GameObject normalItem))
-            {
-                if (normalItem) Destroy(normalItem);     // ø¯∫ª RoomItem ¿¸√º ¡¶∞≈
-                editToNormal.Remove(editItem);
-            }
-
-            Destroy(editItem);                            // ∆Ì¡˝øÎ ∫π¡¶∫ª RoomItem ¿¸√º ¡¶∞≈
-        }
-
-        pendingDeleteEditItems.Clear();
-        pendingDeleteMode = DeleteMode.None;
-
-        CloseConfirmPopup();
-
-        if (HasAnyRoom())
-        {
-            SyncEditList();      // ≥≤¿∫ ∞ÕµÈ ±‚¡ÿ¿∏∑Œ ∆Ì¡˝ »≠∏È ¥ŸΩ√ ±◊∏≤
-        }
-        else
-        {
-            CloseEditMode();     // æ∆π´ ∞Õµµ æ¯¿∏∏È ∆Ì¡˝ »≠∏È ¡æ∑· + Txt_Empty «•Ω√
-        }
-
-        RefreshEmptyText();
-
-        // °⁄ ªË¡¶ »ƒ ∑π¿Ãæ∆øÙ ¿Á∫ÙµÂ
-        RebuildListsNow();
+        popupConfirm.SetActive(true);
     }
 
     void CloseConfirmPopup()
     {
-        if (popupConfirm) popupConfirm.SetActive(false);
+        popupConfirm.SetActive(false);
         pendingDeleteMode = DeleteMode.None;
-        pendingDeleteEditItems.Clear();
+        pendingDeleteItems.Clear();
     }
 
-    // ------------------- ∫Û ªÛ≈¬ æ»≥ª ≈ÿΩ∫∆Æ -------------------
-
-    bool HasAnyRoom()
+    // ------------------------------------------------------------
+    // 5) ÏÇ≠Ï†ú ÌôïÏ†ï
+    // ------------------------------------------------------------
+    void OnConfirmDelete()
     {
-        return listContent && listContent.childCount > 0;
-    }
-
-    void RefreshEmptyText()
-    {
-        if (!txtEmpty) return;
-
-        bool isEmpty = !listContent || listContent.childCount == 0;
-        txtEmpty.SetActive(isEmpty);
-    }
-
-    // Normal ∏ÆΩ∫∆Æ¿« ∏µÁ RoomItem ¿ª "∫∏±‚ ∏µÂ"∑Œ ∏¬√„
-    void FixAllNormalRoomItemMode()
-    {
-        if (!listContent) return;
-
-        foreach (Transform tr in listContent)
+        foreach (var item in pendingDeleteItems)
         {
-            SetRoomItemMode(tr.gameObject, false);
+            if (item != null)
+                Destroy(item.gameObject);
         }
+
+        pendingDeleteItems.Clear();
+        pendingDeleteMode = DeleteMode.None;
+
+        CloseConfirmPopup();
+        RefreshEmptyText();
+        StartCoroutine(RebuildNextFrame());
     }
 
-    // ------------------- RoomItem «Ô∆€ -------------------
-
-    static string GetNowDateString()
+    // ------------------------------------------------------------
+    // 6) Helper
+    // ------------------------------------------------------------
+    string GetNowDateString()
     {
         return System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
     }
 
-    public static void SetRoomItemMode(GameObject roomItem, bool isEdit)
+    bool HasAnyRoom()
     {
-        if (!roomItem) return;
-
-        var t = roomItem.transform;
-        var groupNormal = t.Find("Group_Normal");
-        var groupEdit = t.Find("Group_Edit");
-
-        if (groupNormal) groupNormal.gameObject.SetActive(!isEdit);
-        if (groupEdit) groupEdit.gameObject.SetActive(isEdit);
+        return listContent.childCount > 0;
     }
 
-    public static void ApplyRoomItemTexts(GameObject roomItem, string name, string date)
+    void RefreshEmptyText()
     {
-        if (!roomItem) return;
-
-        SetIfExist(roomItem.transform, "Group_Normal/Col_Texts/Txt_Name", name);
-        SetIfExist(roomItem.transform, "Group_Normal/Col_Texts/Txt_Date", date);
-
-        SetIfExist(roomItem.transform, "Group_Edit/Col_Texts/Txt_Name", name);
-        SetIfExist(roomItem.transform, "Group_Edit/Col_Texts/Txt_Date", date);
+        txtEmpty.SetActive(!HasAnyRoom());
     }
 
-    static void SetIfExist(Transform root, string path, string text)
+    IEnumerator RebuildNextFrame()
     {
-        var tr = root.Find(path);
-        if (!tr) return;
-
-        var tmp = tr.GetComponent<TMP_Text>();
-        if (tmp)
-        {
-            tmp.text = text;
-            return;
-        }
-
-        var uText = tr.GetComponent<Text>();
-        if (uText)
-        {
-            uText.text = text;
-            return;
-        }
-    }
-
-    // ------------------- °⁄ ∑π¿Ãæ∆øÙ ∞≠¡¶ ¿Á∫ÙµÂ -------------------
-    void RebuildListsNow()
-    {
-        // «— π¯ ∞≠¡¶ ∞ËªÍ
-        if (listContent) LayoutRebuilder.ForceRebuildLayoutImmediate(listContent as RectTransform);
-        if (listContentEdit) LayoutRebuilder.ForceRebuildLayoutImmediate(listContentEdit as RectTransform);
-
-        // Canvas ∞ªΩ≈ »ƒ «— π¯ ¥ı (UI∞° ¡ÔΩ√ π›øµµ«µµ∑œ)
+        yield return null;
         Canvas.ForceUpdateCanvases();
-        if (listContent) LayoutRebuilder.ForceRebuildLayoutImmediate(listContent as RectTransform);
-        if (listContentEdit) LayoutRebuilder.ForceRebuildLayoutImmediate(listContentEdit as RectTransform);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(listContent as RectTransform);
+        Canvas.ForceUpdateCanvases();
     }
 }
