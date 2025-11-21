@@ -8,16 +8,16 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/sc_login.unity
     guid: 6790a91e7cf9d6c44ae45c29ff097520
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/sc_main.unity
     guid: 1aec0b96c7e5d054e8cd133cd5421ca4
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/sc_in_build.unity
     guid: 3dd1b8770022ad74f875c19898844de0
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/sc_in_space.unity
     guid: d154979a6fa9933488baefe8a4b463e2
   - enabled: 1
