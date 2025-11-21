@@ -92,12 +92,19 @@ public class MarkerListUIController : MonoBehaviour
         // 1. createdMarkerIcons 리스트를 순회하며 해당 ID를 가진 UI 오브젝트를 찾습니다.
         foreach (GameObject markerIcon in createdMarkerIcons)
         {
-            // UI 오브젝트에 붙어있는 UIMarkerItemData 스크립트에서 ID를 가져옵니다.
             UIMarkerItemData uiItemData = markerIcon.GetComponent<UIMarkerItemData>();
 
             if (uiItemData != null && uiItemData.Data.Id == markerId)
             {
                 markerToRemove = markerIcon;
+
+                // **[핵심]** 연결된 3D 마커를 찾아 파괴
+                if (uiItemData.linked3DMarker != null)
+                {
+                    Destroy(uiItemData.linked3DMarker);
+                    Debug.Log($"[Delete] 연결된 3D 마커({markerId})를 파괴했습니다.");
+                }
+
                 break;
             }
         }
@@ -170,8 +177,20 @@ public class MarkerListUIController : MonoBehaviour
                 uiItemData.Setup(updatedData);
                 markerIcon.name = updatedData.Name; // GameObject 이름도 갱신
 
-                Debug.Log($"[UI List] 마커 ID {updatedData.Id}의 UI 상태가 갱신되었습니다.");
-                return;
+                // 2. **[핵심 추가] 3D 마커 비주얼 업데이트 요청**
+                if (uiItemData.linked3DMarker != null)
+                {
+                    // 3D 마커 오브젝트에서 MarkerVisualSync 컴포넌트를 가져옵니다.
+                    MarkerVisualSync visualSync = uiItemData.linked3DMarker.GetComponent<MarkerVisualSync>();
+
+                    if (visualSync != null)
+                    {
+                        // 3D 마커의 비주얼 갱신 함수를 명시적으로 호출
+                        visualSync.UpdateVisuals();
+                        Debug.Log($"[Sync] 3D 마커 '{updatedData.Name}' 비주얼이 즉시 갱신되었습니다.");
+                    }
+                }
+                return; // 갱신 완료
             }
         }
     }

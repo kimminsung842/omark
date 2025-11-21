@@ -1,19 +1,34 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // TextMeshPro를 사용한다면 필요합니다. (Unity Text 사용 시 제거)
+using UnityEngine.EventSystems; // 드래그 인터페이스 사용
+using TMPro; // TextMeshPro를 사용한다면 필요합니다. 
 
-public class UIMarkerItemData : MonoBehaviour
+public class UIMarkerItemData : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    // 이 UI 항목이 가지는 MarkerData 객체 전체를 참조합니다. (데이터 저장 위치)
+    // 이 UI 항목이 가지는 MarkerData 객체 전체를 참조합니다.
     private MarkerData _data;
     public MarkerData Data { get { return _data; } }
+
+    // 더블 클릭 로직 변수
     private float lastClickTime = 0f;
     private const float DOUBLE_CLICK_TIME = 0.3f;
 
+    // **[핵심]** 2D-3D 동기화를 위한 변수
+    public static MarkerData markerDataToPlace;
+    public GameObject linked3DMarker; // **3D 오브젝트 참조 (삭제 동기화용)**
+
+    // 드래그 로직 변수
+    private GameObject draggedImageObject; // 드래그 중인 시각적 피드백 오브젝트 (임시)
+    private ScrollRect parentScrollRect;   // 상위 Scroll Rect 컴포넌트 (스크롤 차단용)
+
     [Header("UI 요소 연결")]
-    public TextMeshProUGUI nameText; // 마커 이름을 표시하는 Text 컴포넌트
-    public Image colorIndicator;     // 마커 색상을 표시하는 Image 컴포넌트 (예: 배경색)
-    public GameObject favoriteIcon;  // 즐겨찾기 아이콘 오브젝트 (Check 표시)
+    public TextMeshProUGUI nameText;
+    public Image colorIndicator;
+    public GameObject favoriteIcon;
+
+    // [추가] 드래그 시각화용 프리팹
+    [Header("드래그 시각화 프리팹")]
+    public GameObject dragVisualPrefab;
 
     public void Setup(MarkerData data)
     {
@@ -97,5 +112,59 @@ public class UIMarkerItemData : MonoBehaviour
             lastClickTime = Time.time;
             Debug.Log("[Click Event] 싱글 클릭: 다음 더블 클릭 대기 중...");
         }
+    }
+
+    // 1. 드래그 시작 시 호출
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        // 1. 드래그 중인 데이터 저장
+        if (parentScrollRect != null) parentScrollRect.enabled = false;
+        markerDataToPlace = Data;
+
+        // 2. **[수정]** 임시 드래그 이미지 생성
+        if (dragVisualPrefab != null)
+        {
+            // 드래그 시각화용 2D 이미지를 Canvas의 루트에 생성
+            draggedImageObject = Instantiate(dragVisualPrefab, transform.root);
+
+            // 3. CanvasGroup 검사 및 레이캐스트 차단 (드롭 타겟에 방해 방지)
+            CanvasGroup cg = draggedImageObject.GetComponent<CanvasGroup>();
+            if (cg == null) cg = draggedImageObject.AddComponent<CanvasGroup>(); // 없으면 추가
+            cg.blocksRaycasts = false;
+
+            // 4. 위치 초기 설정
+            draggedImageObject.transform.position = eventData.position;
+        }
+        else
+        {
+            Debug.LogError("Drag Visual Prefab이 UIMarkerItemData에 연결되지 않았습니다. 시각적 피드백이 없습니다.");
+        }
+
+        Debug.Log($"[Drag] 드래그 시작: ID {markerDataToPlace.Id}");
+    }
+
+    // 2. 드래그 중 호출
+    public void OnDrag(PointerEventData eventData)
+    {
+        // 임시 이미지를 마우스 위치로 이동
+        if (draggedImageObject != null)
+        {
+            draggedImageObject.transform.position = eventData.position;
+        }
+    }
+
+    // 3. 드래그 종료 시 호출
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        // 스크롤 재활성화
+        if (parentScrollRect != null) parentScrollRect.enabled = true;
+
+        // 임시 이미지 파괴
+        if (draggedImageObject != null)
+        {
+            Destroy(draggedImageObject);
+        }
+
+        // **중요:** markerDataToPlace는 MarkerPlacer가 드롭 로직을 처리한 후 초기화해야 합니다.
     }
 }

@@ -149,6 +149,7 @@ GameObject:
   - component: {fileID: 3177976735432835209}
   - component: {fileID: -1464507763869211048}
   - component: {fileID: 3180167148494596079}
+  - component: {fileID: -7745871004740467374}
   m_Layer: 5
   m_Name: Marker
   m_TagString: Untagged
@@ -283,9 +284,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d60f2f2fcde7ff841ba6fae1475a00ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIMarkerItemData
+  dragVisualPrefab: {fileID: 3895309027659764448}
   nameText: {fileID: 2405807475242891209}
   colorIndicator: {fileID: 3177976735432835209}
   favoriteIcon: {fileID: 8325259740181212953}
+--- !u!225 &-7745871004740467374
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3895309027659764448}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8325259740181212953
 GameObject:
   m_ObjectHideFlags: 0
