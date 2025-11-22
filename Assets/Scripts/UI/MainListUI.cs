@@ -7,7 +7,7 @@ using TMPro;
 public class MainListUI : MonoBehaviour
 {
     [Header("API")]
-    public SpaceApi spaceApi;      // 반드시 Inspector에서 연결!
+    public SpaceApi spaceApi;
 
     [Header("Popup Create")]
     public GameObject popupCreateRoom;
@@ -43,6 +43,7 @@ public class MainListUI : MonoBehaviour
 
     private readonly List<RoomItem> pendingDeleteList = new();
 
+
     // ===============================================================
     // Start — 앱 시작 시 공간 목록 조회
     // ===============================================================
@@ -63,15 +64,19 @@ public class MainListUI : MonoBehaviour
         popupConfirmOK.onClick.AddListener(OnConfirmDelete);
         popupConfirmCancel.onClick.AddListener(CloseConfirmPopup);
 
-        // 서버에서 공간 목록 불러오기
         StartCoroutine(LoadEnvironmentList());
     }
+
 
     // ===============================================================
     // LIST 불러오기
     // ===============================================================
     private IEnumerator LoadEnvironmentList()
     {
+        // 기존 리스트 제거
+        foreach (Transform c in listContent)
+            Destroy(c.gameObject);
+
         yield return spaceApi.GetAllEnvironments(
             onSuccess: (list) =>
             {
@@ -89,19 +94,20 @@ public class MainListUI : MonoBehaviour
             });
     }
 
+
     // 서버 응답 DTO → RoomItem 생성
     private void CreateRoomItemFromServer(VirtualEnvironmentResponseDto env)
     {
         GameObject go = Instantiate(roomItemPrefab, listContent);
         var item = go.GetComponent<RoomItem>();
 
+        // 날짜 대신 CreatedAt 미제공이므로 현재 시간으로 표시
         string nowDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
         item.SetTexts(env.name, nowDate);
         item.environmentId = env.id;
         item.s3FileUrl = env.s3FileUrl;
 
-        // 삭제 요청 이벤트 연결
         item.SetDeleteAction((roomItem) =>
         {
             pendingDeleteList.Clear();
@@ -109,6 +115,8 @@ public class MainListUI : MonoBehaviour
             OpenConfirmPopup(DeleteMode.Single);
         });
     }
+
+
 
     // ===============================================================
     // CREATE (새 공간 생성)
@@ -135,7 +143,6 @@ public class MainListUI : MonoBehaviour
             name,
             onSuccess: (env) =>
             {
-                // 새 RoomItem 생성
                 CreateRoomItemFromServer(env);
 
                 popupCreateRoom.SetActive(false);
@@ -147,6 +154,8 @@ public class MainListUI : MonoBehaviour
                 Debug.LogError(msg);
             }));
     }
+
+
 
     // ===============================================================
     // EDIT MODE
@@ -173,7 +182,6 @@ public class MainListUI : MonoBehaviour
         panelListEdit.SetActive(false);
         panelListNormal.SetActive(true);
 
-        // 모든 변경된 이름 서버에 저장
         StartCoroutine(SaveEditedNames());
 
         StartCoroutine(RebuildNextFrame());
@@ -190,11 +198,9 @@ public class MainListUI : MonoBehaviour
                 string newName = item.GetEditedName();
                 long envId = item.environmentId;
 
-                // UI 적용
                 item.ApplyEditedNameToNormal();
                 item.SetEditMode(false);
 
-                // 서버 요청
                 yield return spaceApi.UpdateEnvironment(
                     envId,
                     newName,
@@ -204,8 +210,10 @@ public class MainListUI : MonoBehaviour
         }
     }
 
+
+
     // ===============================================================
-    // DELETE — 일괄 삭제
+    // DELETE — 체크된 항목 삭제
     // ===============================================================
     private void OnClickDeleteChecked()
     {
@@ -226,6 +234,8 @@ public class MainListUI : MonoBehaviour
 
         OpenConfirmPopup(DeleteMode.Multiple);
     }
+
+
 
     // ===============================================================
     // CONFIRM POPUP
@@ -248,6 +258,8 @@ public class MainListUI : MonoBehaviour
         deleteMode = DeleteMode.None;
         pendingDeleteList.Clear();
     }
+
+
 
     // ===============================================================
     // DELETE — 서버로 삭제 요청 수행
@@ -281,6 +293,8 @@ public class MainListUI : MonoBehaviour
         RefreshEmptyText();
         StartCoroutine(RebuildNextFrame());
     }
+
+
 
     // ===============================================================
     // Utility

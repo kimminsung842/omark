@@ -5,30 +5,18 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/sc_start/sc_splash.unity
+    guid: 5815fce244abfbd4bb91aa9436a46b95
   - enabled: 1
     path: Assets/Scenes/sc_start/sc_login.unity
     guid: 6790a91e7cf9d6c44ae45c29ff097520
   - enabled: 1
-    path: Assets/Scenes/sc_start/sc_main.unity
-    guid: 1aec0b96c7e5d054e8cd133cd5421ca4
+    path: Assets/Scenes/sc_start/sc_signup1.unity
+    guid: d3485a5b370daec429841cf43d396932
   - enabled: 1
-    path: Assets/Scenes/sc_in_build.unity
-    guid: 3dd1b8770022ad74f875c19898844de0
-  - enabled: 1
-    path: Assets/Scenes/sc_in_space.unity
-    guid: d154979a6fa9933488baefe8a4b463e2
-  - enabled: 1
-    path: Assets/Scenes/sc_AR.unity
-    guid: 20a1f61cb978dc54eaeafa15f1e3471d
-  - enabled: 1
-    path: Assets/Scenes/Scene_3DSample.unity
-    guid: d54416f6527d6194f95c214e27d27473
-  - enabled: 1
-    path: Assets/Scenes/sc_start/sc_splash.unity
-    guid: 5815fce244abfbd4bb91aa9436a46b95
+    path: Assets/Scenes/sc_start/sc_signup2.unity
+    guid: 078537d0725f5734f940b24540b03f82
   - enabled: 1
     path: Assets/Scenes/sc_start/sc_findID1.unity
     guid: e4c78b54f08523a41ae0bd0a666da629
@@ -51,14 +39,20 @@ EditorBuildSettings:
     path: Assets/Scenes/sc_start/sc_resetPW2.unity
     guid: 3962ee9fb006aa4499cea3307ab7f9a1
   - enabled: 1
-    path: Assets/Scenes/sc_start/sc_signup1.unity
-    guid: d3485a5b370daec429841cf43d396932
+    path: Assets/Scenes/sc_start/sc_main.unity
+    guid: 1aec0b96c7e5d054e8cd133cd5421ca4
   - enabled: 1
-    path: Assets/Scenes/sc_start/sc_signup2.unity
-    guid: 078537d0725f5734f940b24540b03f82
+    path: Assets/Scenes/sc_roomitem/sample.unity
+    guid: 9ae00114521042c41ba3ba8ec84af95e
+  - enabled: 0
+    path: Assets/Scenes/sc_in_build.unity
+    guid: 3dd1b8770022ad74f875c19898844de0
+  - enabled: 0
+    path: Assets/Scenes/sc_in_space.unity
+    guid: d154979a6fa9933488baefe8a4b463e2
+  - enabled: 0
+    path: Assets/Scenes/sc_AITest.unity
+    guid: 3ebdcafab0360ee4a8db5c4f40f82e4f
   m_configObjects:
-    UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 180c05ce96bba5e4184436af23a4b0da, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 4a7436f1691dca84fbca76788145023a, type: 2}
-    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: f1b5e40eddeea344698409e89cb2ba9a, type: 2}
   m_UseUCBPForAssetBundles: 0

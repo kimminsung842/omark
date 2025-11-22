@@ -1,126 +1,82 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System;
+using UnityEngine.SceneManagement;
 
 public class RoomItem : MonoBehaviour
 {
-    // ============================================================
-    //  Backend 정보 (필수)
-    // ============================================================
-    public long environmentId;     // 서버에서 받은 공간 ID
-    public string s3FileUrl;       // 서버에서 받은 S3 파일 URL (null 가능)
-
-    // ============================================================
-    //  Normal / Edit UI 그룹
-    // ============================================================
-    [Header("Groups")]
-    public GameObject groupNormal;
-    public GameObject groupEdit;
-
-    // ============================================================
-    //  Normal Mode UI
-    // ============================================================
     [Header("Normal Mode")]
-    public TMP_Text txtNameNormal;
-    public TMP_Text txtDateNormal;
-    public Button btnPlay;         // 클릭 시 sample 씬 이동
+    public GameObject groupNormal;
+    public TMP_Text txtName;
+    public TMP_Text txtDate;
 
-    // ============================================================
-    //  Edit Mode UI
-    // ============================================================
     [Header("Edit Mode")]
-    public TMP_InputField inputNameEdit;
-    public TMP_Text txtDateEdit;
-    public Button btnDeleteEdit;   // 단일 삭제 요청 버튼
-    public Toggle toggleSelect;    // 일괄 삭제용 체크박스
+    public GameObject groupEdit;
+    public TMP_InputField inputName;
+    public Toggle toggleSelect;
 
-    // 삭제 요청 콜백
-    private Action<RoomItem> onDeleteRequest;
+    [Header("Buttons")]
+    public Button btnEdit;
+    public Button btnDelete;
 
-    // ============================================================
-    //  초기 텍스트 설정
-    // ============================================================
+    public long environmentId;
+    public string s3FileUrl;
+
+    private System.Action<RoomItem> onDelete;
+
+    private void Start()
+    {
+        groupNormal.SetActive(true);
+        groupEdit.SetActive(false);
+
+        btnEdit.onClick.AddListener(OnClickEdit);
+        btnDelete.onClick.AddListener(() => onDelete?.Invoke(this));
+    }
+
+    private void OnClickEdit()
+    {
+        SpaceSession.currentEnvironmentId = environmentId;
+        SpaceSession.currentS3Url = s3FileUrl;
+        SceneManager.LoadScene("sample");
+    }
+
     public void SetTexts(string name, string date)
     {
-        if (txtNameNormal) txtNameNormal.text = name;
-        if (txtDateNormal) txtDateNormal.text = date;
-
-        if (inputNameEdit) inputNameEdit.text = name;
-        if (txtDateEdit) txtDateEdit.text = date;
+        txtName.text = name;
+        txtDate.text = date;
     }
 
-    // ============================================================
-    //  편집모드에서 입력한 이름 반환
-    // ============================================================
-    public string GetEditedName()
+    public void SetDeleteAction(System.Action<RoomItem> callback)
     {
-        return inputNameEdit != null ? inputNameEdit.text : "";
+        onDelete = callback;
     }
 
-    // 편집모드 종료 시 Normal 표시에도 반영
-    public void ApplyEditedNameToNormal()
+    public void SetEditMode(bool active)
     {
-        if (txtNameNormal && inputNameEdit)
-            txtNameNormal.text = inputNameEdit.text;
+        groupNormal.SetActive(!active);
+        groupEdit.SetActive(active);
+
+        if (active)
+            inputName.text = txtName.text;
     }
 
-    // ============================================================
-    //  Normal/Edit 전환
-    // ============================================================
-    public void SetEditMode(bool isEdit)
+    public void SetToggle(bool value)
     {
-        if (groupNormal) groupNormal.SetActive(!isEdit);
-        if (groupEdit) groupEdit.SetActive(isEdit);
-    }
-
-    // ============================================================
-    //  토글 기능
-    // ============================================================
-    public void SetToggle(bool on)
-    {
-        if (toggleSelect != null)
-            toggleSelect.isOn = on;
+        toggleSelect.isOn = value;
     }
 
     public bool IsSelected()
     {
-        return toggleSelect != null && toggleSelect.isOn;
+        return toggleSelect.isOn;
     }
 
-    // ============================================================
-    //  삭제 요청 콜백 연결
-    // ============================================================
-    public void SetDeleteAction(Action<RoomItem> callback)
+    public string GetEditedName()
     {
-        onDeleteRequest = callback;
-
-        if (btnDeleteEdit != null)
-        {
-            btnDeleteEdit.onClick.RemoveAllListeners();
-            btnDeleteEdit.onClick.AddListener(() =>
-            {
-                onDeleteRequest?.Invoke(this);
-            });
-        }
+        return inputName.text;
     }
 
-    // ============================================================
-    //  Btn_Play 클릭 시 sample 씬 이동
-    // ============================================================
-    private void Start()
+    public void ApplyEditedNameToNormal()
     {
-        if (btnPlay != null)
-        {
-            btnPlay.onClick.RemoveAllListeners();
-            btnPlay.onClick.AddListener(() =>
-            {
-                // SampleSceneLoader(다음 단계에서 제작)에 전달
-                SampleSceneLoader.Load(environmentId, s3FileUrl);
-
-                // 씬 이동
-                UnityEngine.SceneManagement.SceneManager.LoadScene("sample");
-            });
-        }
+        txtName.text = inputName.text;
     }
 }

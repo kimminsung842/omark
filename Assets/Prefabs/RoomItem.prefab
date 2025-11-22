@@ -914,13 +914,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomItem
   groupNormal: {fileID: 477893754395505125}
+  txtName: {fileID: 7449948265167903220}
+  txtDate: {fileID: 3974225562203123605}
   groupEdit: {fileID: 6833901509474457294}
-  txtNameNormal: {fileID: 7449948265167903220}
-  txtDateNormal: {fileID: 3974225562203123605}
-  inputNameEdit: {fileID: 8781059061477995829}
-  txtDateEdit: {fileID: 0}
-  btnDeleteEdit: {fileID: 6684240008572424922}
+  inputName: {fileID: 8781059061477995829}
   toggleSelect: {fileID: 4420846258216452628}
+  btnEdit: {fileID: 7056209037983957482}
+  btnDelete: {fileID: 6684240008572424922}
+  environmentId: 0
+  s3FileUrl: 
 --- !u!1 &4864436035401742717
 GameObject:
   m_ObjectHideFlags: 0
